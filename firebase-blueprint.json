@@ -1,0 +1,476 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private learning profile and settings for an authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 320
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "degree": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "targetRole": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "targetCompanies": {
+          "type": "array",
+          "description": "Up to 15 target tech companies"
+        },
+        "primaryLanguage": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "framework": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "database": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "dailyHours": {
+          "type": "number"
+        },
+        "roadmapDays": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "name",
+        "degree",
+        "targetRole",
+        "targetCompanies",
+        "primaryLanguage",
+        "framework",
+        "database",
+        "dailyHours",
+        "roadmapDays",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "RoadmapDayProgress": {
+      "title": "RoadmapDayProgress",
+      "description": "Daily checklist progress and notes for one roadmap day.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "dayNumber": {
+          "type": "number"
+        },
+        "dsaCompleted": {
+          "type": "boolean"
+        },
+        "backendCompleted": {
+          "type": "boolean"
+        },
+        "revisionCompleted": {
+          "type": "boolean"
+        },
+        "githubPushed": {
+          "type": "boolean"
+        },
+        "isCompleted": {
+          "type": "boolean"
+        },
+        "userNotes": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "dayNumber",
+        "dsaCompleted",
+        "backendCompleted",
+        "revisionCompleted",
+        "githubPushed",
+        "isCompleted",
+        "userNotes",
+        "completedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DsaProblemRecord": {
+      "title": "DsaProblemRecord",
+      "description": "Tracked DSA problem with status, complexity, and solution notes.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"],
+          "maxLength": 20
+        },
+        "leetCodeUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Not Started", "Attempted", "Solved", "Revised"],
+          "maxLength": 30
+        },
+        "timeComplexity": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "spaceComplexity": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "revisitDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "dateAttempted": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "topic",
+        "difficulty",
+        "leetCodeUrl",
+        "status",
+        "timeComplexity",
+        "spaceComplexity",
+        "notes",
+        "revisitDate",
+        "dateAttempted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BackendLessonProgress": {
+      "title": "BackendLessonProgress",
+      "description": "Completion state for an individual backend curriculum lesson.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "moduleId": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "lessonId": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "moduleId",
+        "lessonId",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProjectRecord": {
+      "title": "ProjectRecord",
+      "description": "Portfolio backend project with milestones and repository links.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "techStack": {
+          "type": "array",
+          "description": "Up to 20 tech tags"
+        },
+        "startDate": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "deadline": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Planned", "In Progress", "Completed"],
+          "maxLength": 30
+        },
+        "githubUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "liveUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "milestones": {
+          "type": "array",
+          "description": "Up to 30 milestone items"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "description",
+        "techStack",
+        "startDate",
+        "deadline",
+        "status",
+        "githubUrl",
+        "liveUrl",
+        "milestones",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "NoteRecord": {
+      "title": "NoteRecord",
+      "description": "Personal revision and architecture note.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Java",
+            "DSA",
+            "Spring Boot",
+            "SQL",
+            "DBMS",
+            "OS",
+            "Computer Networks",
+            "System Design",
+            "Projects",
+            "Interview Preparation"
+          ],
+          "maxLength": 50
+        },
+        "content": {
+          "type": "string",
+          "maxLength": 50000
+        },
+        "isPinned": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "category",
+        "content",
+        "isPinned",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WeeklyTestResult": {
+      "title": "WeeklyTestResult",
+      "description": "Recorded score for a weekly diagnostic assessment.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "testId": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "weekNumber": {
+          "type": "number"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "testId",
+        "weekNumber",
+        "completed",
+        "score",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user learning profile and settings."
+    },
+    "/users/{userId}/roadmapProgress/{dayId}": {
+      "schema": {
+        "$ref": "#/entities/RoadmapDayProgress"
+      },
+      "description": "Per-day roadmap completion and notes for the owning user."
+    },
+    "/users/{userId}/dsaProblems/{problemId}": {
+      "schema": {
+        "$ref": "#/entities/DsaProblemRecord"
+      },
+      "description": "Tracked DSA problems for the owning user."
+    },
+    "/users/{userId}/backendLessons/{lessonId}": {
+      "schema": {
+        "$ref": "#/entities/BackendLessonProgress"
+      },
+      "description": "Backend lesson completion records for the owning user."
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": {
+        "$ref": "#/entities/ProjectRecord"
+      },
+      "description": "User portfolio projects and milestones."
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": {
+        "$ref": "#/entities/NoteRecord"
+      },
+      "description": "User technical revision notes."
+    },
+    "/users/{userId}/weeklyTests/{testId}": {
+      "schema": {
+        "$ref": "#/entities/WeeklyTestResult"
+      },
+      "description": "Weekly assessment completion and score records."
+    }
+  }
+}

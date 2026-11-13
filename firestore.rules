@@ -1,0 +1,361 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Helper Functions
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'email', 'name', 'degree', 'targetRole',
+          'targetCompanies', 'primaryLanguage', 'framework',
+          'database', 'dailyHours', 'roadmapDays', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'email', 'name', 'degree', 'targetRole',
+          'targetCompanies', 'primaryLanguage', 'framework',
+          'database', 'dailyHours', 'roadmapDays', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && isValidId(data.uid)
+        && isValidString(data.email, 3, 320)
+        && isValidString(data.name, 1, 100)
+        && isValidString(data.degree, 0, 150)
+        && isValidString(data.targetRole, 0, 150)
+        && data.targetCompanies is list
+        && data.targetCompanies.size() <= 15
+        && (data.targetCompanies.size() == 0 || data.targetCompanies[0] is string)
+        && isValidString(data.primaryLanguage, 1, 60)
+        && isValidString(data.framework, 1, 60)
+        && isValidString(data.database, 1, 60)
+        && data.dailyHours is number && data.dailyHours >= 1 && data.dailyHours <= 24
+        && data.roadmapDays is number && data.roadmapDays >= 1 && data.roadmapDays <= 365
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidRoadmapDay(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'dayNumber', 'dsaCompleted', 'backendCompleted',
+          'revisionCompleted', 'githubPushed', 'isCompleted',
+          'userNotes', 'completedAt', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'dayNumber', 'dsaCompleted', 'backendCompleted',
+          'revisionCompleted', 'githubPushed', 'isCompleted',
+          'userNotes', 'completedAt', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && data.dayNumber is number && data.dayNumber >= 1 && data.dayNumber <= 252
+        && data.dsaCompleted is bool
+        && data.backendCompleted is bool
+        && data.revisionCompleted is bool
+        && data.githubPushed is bool
+        && data.isCompleted is bool
+        && isValidString(data.userNotes, 0, 5000)
+        && isValidString(data.completedAt, 0, 30)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDsaProblem(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'topic', 'difficulty', 'leetCodeUrl',
+          'status', 'timeComplexity', 'spaceComplexity', 'notes',
+          'revisitDate', 'dateAttempted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'name', 'topic', 'difficulty', 'leetCodeUrl',
+          'status', 'timeComplexity', 'spaceComplexity', 'notes',
+          'revisitDate', 'dateAttempted', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && isValidString(data.name, 1, 200)
+        && isValidString(data.topic, 1, 100)
+        && data.difficulty in ['Easy', 'Medium', 'Hard']
+        && isValidString(data.leetCodeUrl, 0, 500)
+        && data.status in ['Not Started', 'Attempted', 'Solved', 'Revised']
+        && isValidString(data.timeComplexity, 0, 100)
+        && isValidString(data.spaceComplexity, 0, 100)
+        && isValidString(data.notes, 0, 5000)
+        && isValidString(data.revisitDate, 0, 30)
+        && isValidString(data.dateAttempted, 0, 30)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidBackendLesson(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'moduleId', 'lessonId', 'completed', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'moduleId', 'lessonId', 'completed', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && isValidString(data.moduleId, 1, 60)
+        && isValidString(data.lessonId, 1, 60)
+        && data.completed is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProject(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'description', 'techStack', 'startDate',
+          'deadline', 'status', 'githubUrl', 'liveUrl', 'milestones',
+          'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'description', 'techStack', 'startDate',
+          'deadline', 'status', 'githubUrl', 'liveUrl', 'milestones',
+          'notes', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && isValidString(data.title, 1, 200)
+        && isValidString(data.description, 0, 2000)
+        && data.techStack is list
+        && data.techStack.size() <= 20
+        && (data.techStack.size() == 0 || data.techStack[0] is string)
+        && isValidString(data.startDate, 0, 30)
+        && isValidString(data.deadline, 0, 30)
+        && data.status in ['Planned', 'In Progress', 'Completed']
+        && isValidString(data.githubUrl, 0, 500)
+        && isValidString(data.liveUrl, 0, 500)
+        && data.milestones is list
+        && data.milestones.size() <= 30
+        && (data.milestones.size() == 0 || data.milestones[0] is map)
+        && isValidString(data.notes, 0, 5000)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidNote(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'title', 'category', 'content', 'isPinned', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'title', 'category', 'content', 'isPinned', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && isValidString(data.title, 1, 200)
+        && data.category in [
+          'Java', 'DSA', 'Spring Boot', 'SQL', 'DBMS', 'OS',
+          'Computer Networks', 'System Design', 'Projects', 'Interview Preparation'
+        ]
+        && isValidString(data.content, 0, 50000)
+        && data.isPinned is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWeeklyTest(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'testId', 'weekNumber', 'completed', 'score', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'testId', 'weekNumber', 'completed', 'score', 'createdAt', 'updatedAt'
+        ])
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && isValidId(data.ownerId)
+        && isValidString(data.testId, 1, 60)
+        && data.weekNumber is number && data.weekNumber >= 1 && data.weekNumber <= 52
+        && data.completed is bool
+        && data.score is number && data.score >= 0 && data.score <= 100
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Rules (Strict Owner-Only Isolation)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'degree', 'targetRole', 'targetCompanies',
+          'primaryLanguage', 'framework', 'database', 'dailyHours', 'updatedAt'
+        ]);
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      // Subcollection: Roadmap Progress
+      match /roadmapProgress/{dayId} {
+        allow get: if isValidId(userId) && isValidId(dayId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(dayId)
+          && isOwner(userId)
+          && isValidRoadmapDay(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(dayId)
+          && isOwner(userId)
+          && isValidRoadmapDay(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().dayNumber == existing().dayNumber
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'dsaCompleted', 'backendCompleted', 'revisionCompleted',
+            'githubPushed', 'isCompleted', 'userNotes', 'completedAt', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(dayId) && isOwner(userId);
+      }
+
+      // Subcollection: DSA Problems
+      match /dsaProblems/{problemId} {
+        allow get: if isValidId(userId) && isValidId(problemId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(problemId)
+          && isOwner(userId)
+          && isValidDsaProblem(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(problemId)
+          && isOwner(userId)
+          && isValidDsaProblem(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'topic', 'difficulty', 'leetCodeUrl', 'status',
+            'timeComplexity', 'spaceComplexity', 'notes', 'revisitDate',
+            'dateAttempted', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(problemId) && isOwner(userId);
+      }
+
+      // Subcollection: Backend Lessons
+      match /backendLessons/{lessonId} {
+        allow get: if isValidId(userId) && isValidId(lessonId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(lessonId)
+          && isOwner(userId)
+          && isValidBackendLesson(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(lessonId)
+          && isOwner(userId)
+          && isValidBackendLesson(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().moduleId == existing().moduleId
+          && incoming().lessonId == existing().lessonId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(lessonId) && isOwner(userId);
+      }
+
+      // Subcollection: Portfolio Projects
+      match /projects/{projectId} {
+        allow get: if isValidId(userId) && isValidId(projectId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(projectId)
+          && isOwner(userId)
+          && isValidProject(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(projectId)
+          && isOwner(userId)
+          && isValidProject(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'description', 'techStack', 'startDate', 'deadline',
+            'status', 'githubUrl', 'liveUrl', 'milestones', 'notes', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(projectId) && isOwner(userId);
+      }
+
+      // Subcollection: Notes
+      match /notes/{noteId} {
+        allow get: if isValidId(userId) && isValidId(noteId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(noteId)
+          && isOwner(userId)
+          && isValidNote(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(noteId)
+          && isOwner(userId)
+          && isValidNote(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'category', 'content', 'isPinned', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(noteId) && isOwner(userId);
+      }
+
+      // Subcollection: Weekly Tests
+      match /weeklyTests/{testId} {
+        allow get: if isValidId(userId) && isValidId(testId) && isOwner(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(testId)
+          && isOwner(userId)
+          && isValidWeeklyTest(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(testId)
+          && isOwner(userId)
+          && isValidWeeklyTest(incoming(), userId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().testId == existing().testId
+          && incoming().weekNumber == existing().weekNumber
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'completed', 'score', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(testId) && isOwner(userId);
+      }
+    }
+  }
+}
